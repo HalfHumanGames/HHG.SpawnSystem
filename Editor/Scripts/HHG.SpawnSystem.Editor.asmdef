@@ -1,0 +1,20 @@
+{
+    "name": "HHG.SpawnSystem.Editor",
+    "rootNamespace": "",
+    "references": [
+        "GUID:8413476b1284ef74fa7300662f10cca9",
+        "GUID:58e50624d553f054bb18bfdd8f73e24c",
+        "GUID:127ea510dc46481479ac3e189a29d9e8"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
