@@ -1,0 +1,23 @@
+{
+  "name": "com.halfhumangames.spawnsystem",
+  "version": "1.0.0",
+  "displayName": "HHG - Spawn System",
+  "description": "Spawn system for Unity",
+  "unity": "2020.3",
+  "unityRelease": "6f1",
+  "documentationUrl": "https://github.com/HalfHumanGames/HHG.SpawnSystem/blob/main/README.md",
+  "changelogUrl": "https://github.com/HalfHumanGames/HHG.SpawnSystem/blob/main/CHANGELOG.md",
+  "licensesUrl": "https://github.com/HalfHumanGames/HHG.SpawnSystem/blob/main/LICENSE",
+  "keywords": [
+    "Spawn",
+    "Element"
+  ],
+  "author": {
+    "name": "Half Human Games",
+    "email": "contact@halfhumangames.com",
+    "url": "https://github.com/HalfHumanGames"
+  },
+  "dependencies": {
+    "com.halfhumangames.common": "1.0.0"
+  }
+}
