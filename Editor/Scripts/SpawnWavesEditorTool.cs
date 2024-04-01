@@ -17,7 +17,7 @@ namespace HHG.SpawnSystem.Editor
 
         private const float imageScaleFactor = 1000f;
         private const float imageSize = 100f;
-        private const float buttonSize = 120f;
+        private const float buttonSize = 80f;
         private const float handleOffsetY = 2f;
         private const float nameWidth = 100f;
         private const float nameHeight = 20f;
@@ -147,6 +147,10 @@ namespace HHG.SpawnSystem.Editor
             if (sprite != null)
             {
                 GUI.DrawTexture(rect, sprite.texture);
+            }
+            else
+            {
+                GUI.DrawTexture(rect, Texture2D.whiteTexture, ScaleMode.StretchToFill, true, 1f, new Color(1f, 1f, 1f, .35f), 0f, 0f);
             }
 
             Vector2 size1 = new Vector2(buttonSize, buttonSize);
