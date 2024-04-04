@@ -144,10 +144,11 @@ namespace HHG.SpawnSystem.Runtime
 
         public string GetWaveInfoText(int wave)
         {
-            
-            var counts = spawnPoints?.
+            var spawns = spawnPoints?.
                 Select(s => s[wave]).
-                Where(s => s != null).
+                Where(s => s != null);
+
+            var counts = spawns.
                 GroupBy(s => s.name).
                 Select(g => new
                 {
@@ -164,6 +165,8 @@ namespace HHG.SpawnSystem.Runtime
             {
                 sb.AppendLine($"• {count.Spawn}: {count.Count}");
             }
+
+            ISpawnAsset.AppendInfoText(sb, spawnPoints, wave);
 
             return sb.ToString().Trim();
         }

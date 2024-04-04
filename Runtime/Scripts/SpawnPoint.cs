@@ -11,6 +11,7 @@ namespace HHG.SpawnSystem.Runtime
     {
         public string Name { get => name; set => name = value; }
         public Vector2 Position { get => position; set => position = value; }
+        public IReadOnlyList<ScriptableObject> Spawns => spawns;
         public int WaveCount => spawns.Count;
 
         public ScriptableObject this[int i]
