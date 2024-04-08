@@ -60,7 +60,7 @@ namespace HHG.SpawnSystem.Editor
 
         private void RefreshDropdownValues()
         {
-            DropdownUtility.GetChoiceList(ref choiceAssets, ref choiceNames, null, t => t.Implements(typeof(ISpawnAsset)));
+            DropdownUtility.GetChoiceList(ref choiceAssets, ref choiceNames, t => t.IsBaseImplementationOf(typeof(ISpawnAsset)), o => (o as ISpawnAsset).IsEnabled);
         }
 
         private void OnSpawnPointEdited()
@@ -276,7 +276,8 @@ namespace HHG.SpawnSystem.Editor
         {
             (int index, int wave) = ((int, int))(evt.target as DropdownField).userData;
 
-            ScriptableObject value = choiceAssets.FirstOrDefault(c => c != null && c.name == evt.newValue);
+            int i = choiceNames.IndexOf(evt.newValue);
+            ScriptableObject value = choiceAssets[i];
 
             asset.SpawnPoints[index][wave] = value;
 

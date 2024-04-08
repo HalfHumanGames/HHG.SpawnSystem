@@ -7,12 +7,13 @@ namespace HHG.SpawnSystem.Runtime
 {
     public interface ISpawnAsset
     {
+        public bool IsEnabled { get; }
         public GameObject Prefab { get; }
         public Sprite Icon { get; }
 
         public void AppendInfoTextInternal(StringBuilder sb, List<SpawnPoint> points, int wave)
         {
-        
+
         }
 
         public static void AppendInfoText(StringBuilder sb, List<SpawnPoint> points, int wave)
