@@ -170,7 +170,6 @@ namespace HHG.SpawnSystem.Editor
             }
         }
 
-
         private void RebuildSpawnWaveColumns()
         {
             while (columns.Count > 1)

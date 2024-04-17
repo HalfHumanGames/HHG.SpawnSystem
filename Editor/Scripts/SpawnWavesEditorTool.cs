@@ -22,14 +22,14 @@ namespace HHG.SpawnSystem.Editor
         private const float nameWidth = 100f;
         private const float nameHeight = 20f;
 
-        private ISpawnWavesManager _manager;
-        private ISpawnWavesManager manager
+        private SpawnManager _manager;
+        private SpawnManager manager
         {
             get
             {
                 if (_manager == null)
                 {
-                    _manager = this.FindObjectOfType<ISpawnWavesManager>();
+                    _manager = this.FindObjectOfType<SpawnManager>();
                 }
                 return _manager;
             }
