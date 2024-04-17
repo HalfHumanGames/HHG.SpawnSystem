@@ -68,10 +68,20 @@ namespace HHG.SpawnSystem.Runtime
 
         private void CheckIfDoneSpawning()
         {
+            // Do initial check so don't create unnecessary coroutines
+            // TODO: Won't work if spawner has a start delay, but we'll
+            // worry about that scenario later on
             if (spawns.Count == 0 && Wave.Value == spawnWaves.WaveCount)
             {
-                OnDoneSpawning();
-            }
+                // Wait a frame in case killed spawned spawns chils spawns
+                this.Invoker().NextFrame(_ =>
+                {
+                    if (spawns.Count == 0 && Wave.Value == spawnWaves.WaveCount)
+                    {
+                        OnDoneSpawning();
+                    }
+                });
+            }      
         }
 
         private void Spawn(Spawn spawn)
@@ -84,11 +94,16 @@ namespace HHG.SpawnSystem.Runtime
             GameObject instance = Instantiate(spawn.Asset.Prefab, spawn.Position + offset, Quaternion.identity, transform);
             // Use GetComponentsInChildren since spawns may contain child spawns
             T[] spawned = instance.GetComponentsInChildren<T>();
-            for (int i = 0; i < spawned.Length; i++)
+            foreach (T enemy in spawned)
             {
-                T enemy = spawned[i];
                 enemy.Health.OnDied.AddListener(OnSpawnDie);
                 spawns.Add(enemy);
+            }
+
+            Spawner[] spawners = instance.GetComponentsInChildren<Spawner>();
+            foreach (Spawner spawner in spawners)
+            {
+                spawner.Initialize(Spawn);
             }
 
             OnSpawned(spawned);
