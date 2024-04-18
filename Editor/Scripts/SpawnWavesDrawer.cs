@@ -212,7 +212,9 @@ namespace HHG.SpawnSystem.Editor
                         dropdownField.UnregisterValueChangedCallback(OnSpawnDropdownChanged);
                         dropdownField.RegisterValueChangedCallback(OnSpawnDropdownChanged);
                         dropdownField.userData = (index, wave);
-                        dropdownField.SetValueWithoutNotify(index < asset.SpawnPoints.Count ? asset.SpawnPoints[index][wave]?.name ?? "None" : "None");
+                        ScriptableObject spawn = index < asset.SpawnPoints.Count ? asset.SpawnPoints[index][wave] : null;
+                        string name = spawn != null ? spawn.name : "None";
+                        dropdownField.SetValueWithoutNotify(name);
                     }
                 });
             }
