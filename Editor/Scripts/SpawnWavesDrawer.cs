@@ -60,7 +60,7 @@ namespace HHG.SpawnSystem.Editor
 
         private void RefreshDropdownValues()
         {
-            DropdownUtility.GetChoiceList(ref choiceAssets, ref choiceNames, t => t.IsBaseImplementationOf(typeof(ISpawnAsset)), o => (o as ISpawnAsset).IsEnabled);
+            DropdownUtil.GetChoiceList(ref choiceAssets, ref choiceNames, t => t.IsBaseImplementationOf(typeof(ISpawnAsset)), o => (o as ISpawnAsset).IsEnabled);
         }
 
         private void OnSpawnPointEdited()

@@ -43,7 +43,7 @@ namespace HHG.SpawnSystem.Editor
         {
             showNames = EditorPrefs.GetBool(showNamesKey, false);
 
-            DropdownUtility.GetChoiceArray(ref spawns, t => t.IsBaseImplementationOf(typeof(ISpawnAsset)), o => (o as ISpawnAsset).IsEnabled);
+            DropdownUtil.GetChoiceArray(ref spawns, t => t.IsBaseImplementationOf(typeof(ISpawnAsset)), o => (o as ISpawnAsset).IsEnabled);
         }
 
         public override void OnToolGUI(EditorWindow window)
@@ -185,7 +185,7 @@ namespace HHG.SpawnSystem.Editor
 
             if (EditorGUI.EndChangeCheck())
             {
-                Undo.RecordObject((MonoBehaviour)manager, "Change Spawn Point Position");
+                Undo.RecordObject(manager, "Change Spawn Point Position");
                 spawnPoint.Position = (Vector2)position + Vector2.down * handleOffsetY;
                 EditorUtility.SetDirty(manager.SpawnWaves);
             }
@@ -199,7 +199,7 @@ namespace HHG.SpawnSystem.Editor
             {
                 ScriptableObject spawn = spawns[i];
                 bool on = spawnPoint[wave] == spawn;
-                string name = DropdownUtility.FormatChoiceText(spawn?.name ?? "None");
+                string name = DropdownUtil.FormatChoiceText(spawn?.name ?? "None");
                 menu.AddItem(new GUIContent($"Spawn/{name}"), on, () =>
                 {
                     spawnPoint[wave] = spawn;
