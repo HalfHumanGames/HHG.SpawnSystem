@@ -63,7 +63,6 @@ namespace HHG.SpawnSystem.Runtime
         private void OnSpawnDie(IHealth health)
         {
             Despawn(health.Mono.GetComponent<T>());
-            CheckIfDoneSpawning();
         }
 
         private void CheckIfDoneSpawning()
@@ -84,7 +83,7 @@ namespace HHG.SpawnSystem.Runtime
             }      
         }
 
-        private void Spawn(Spawn spawn)
+        protected void Spawn(Spawn spawn)
         {
             if (spawn.Asset == null) return;
 
@@ -109,7 +108,7 @@ namespace HHG.SpawnSystem.Runtime
             OnSpawned(spawned);
         }
 
-        private void Despawn(T enemy)
+        protected void Despawn(T enemy)
         {
             spawns.Remove(enemy);
 
@@ -119,6 +118,8 @@ namespace HHG.SpawnSystem.Runtime
             }
 
             OnDespawned(enemy);
+            CheckIfDoneSpawning();
+
         }
 
         protected virtual void OnDestroy()
