@@ -16,11 +16,11 @@ namespace HHG.SpawnSystem.Runtime
         public IDataProxy<int> Wave { get; private set; }
         public IReadOnlyList<T> Spawns => spawns;
 
-        private List<T> spawns = new List<T>();
-        private int wave;
-        private float timer;
+        protected List<T> spawns = new List<T>();
+        protected int wave;
+        protected float timer;
 
-        private enum Mode
+        protected enum Mode
         {
             Random,
             Cycle
