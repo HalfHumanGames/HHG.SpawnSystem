@@ -39,14 +39,16 @@ namespace HHG.SpawnSystem.Editor
 
             // Use reflection since columnReordered is not public for whatever reason
             Action<Column, int, int> handler = OnColumnReordered;
-            EventInfo eventInfo = typeof(Columns).GetEvent("columnReordered", BindingFlags.NonPublic | BindingFlags.Instance);
-            MethodInfo methodInfo = eventInfo.GetAddMethod(true);
-            methodInfo.Invoke(columns, new[] { handler });
+            EventInfo evt = typeof(Columns).GetEvent("columnReordered", BindingFlags.NonPublic | BindingFlags.Instance);
+            MethodInfo add = evt.GetAddMethod(true);
+            MethodInfo remove = evt.GetRemoveMethod(true);
+            remove.Invoke(columns, new[] { handler }); // Just in case
+            add.Invoke(columns, new[] { handler });
 
             table = new MultiColumnListView(columns);
             table.itemsSource = asset == null ? new List<SpawnPoint>() : asset.SpawnPointsList;
             table.reorderable = true;
-            table.reorderMode = ListViewReorderMode.Animated;
+            table.reorderMode = ListViewReorderMode.Simple;
             table.selectionType = SelectionType.None;
             RebuildSpawnPointColumn();
             RebuildSpawnWaveColumns();
@@ -70,6 +72,11 @@ namespace HHG.SpawnSystem.Editor
 
         private void OnColumnReordered(Column column, int from, int to)
         {
+            if (from == to)
+            {
+                return;
+            }
+
             if (from == 0 || to == 0)
             {
                 RebuildSpawnPointColumn();
