@@ -14,11 +14,12 @@ namespace HHG.SpawnSystem.Runtime
     public abstract class SpawnManager<T> : SpawnManager where T : ISpawn
     {
         public IDataProxy<int> Wave { get; private set; }
+        public IDataProxy<float> Timer { get; private set; }
         public IReadOnlyList<T> Spawns => spawns;
 
-        protected List<T> spawns = new List<T>();
-        protected int wave;
-        protected float timer;
+        private List<T> spawns = new List<T>();
+        private int wave = -1; // Waves start at 0
+        private float timer;
 
         protected enum Mode
         {
@@ -36,22 +37,24 @@ namespace HHG.SpawnSystem.Runtime
 
         protected virtual void Awake()
         {
-            wave = 0;
             Wave = new DataProxy<int>(() => wave, v => wave = v);
-            timer = GetWaveDuration(Wave.Value) - GetFirstWaveDelay();
+            Timer = new DataProxy<float>(() => timer, v => timer = v);
+            Timer.Value = GetWaveDuration(Wave.Value) - GetFirstWaveDelay();
         }
 
         protected virtual void Update()
         {
             if (Wave.Value < spawnWaves.WaveCount)
             {
-                timer += Time.deltaTime;
+                Timer.Value += Time.deltaTime;
 
-                if (timer > GetWaveDuration(Wave.Value))
+                if (Timer.Value > GetWaveDuration(Wave.Value))
                 {
-                    timer = 0;
+                    Wave.Value++;
 
-                    Spawn[] spawns = spawnWaves.GetSpawnsForWave(Wave.Value++);
+                    Timer.Value = 0;
+
+                    Spawn[] spawns = spawnWaves.GetSpawnsForWave(Wave.Value);
                     foreach (Spawn spawn in spawns)
                     {
                         Spawn(spawn);
@@ -90,16 +93,23 @@ namespace HHG.SpawnSystem.Runtime
             // Spawns can get stuck if their target position is lined up with them
             // No idea why this happens, but offsetting it prevents this from happening
             Vector3 offset = new Vector3(.1f, .1f);
-            GameObject instance = Instantiate(spawn.Asset.Prefab, spawn.Position + offset, Quaternion.identity, transform);
+            GameObject go = Instantiate(spawn.Asset.Prefab, spawn.Position + offset, Quaternion.identity, transform);
+            SetupSpawns(go);
+        }
+
+        protected void SetupSpawns(GameObject go = null)
+        {
+            go ??= gameObject; // Gets all child spawns
+
             // Use GetComponentsInChildren since spawns may contain child spawns
-            T[] spawned = instance.GetComponentsInChildren<T>();
+            T[] spawned = go.GetComponentsInChildren<T>();
             foreach (T enemy in spawned)
             {
                 enemy.Health.OnDied.AddListener(OnSpawnDie);
                 spawns.Add(enemy);
             }
 
-            Spawner[] spawners = instance.GetComponentsInChildren<Spawner>();
+            Spawner[] spawners = go.GetComponentsInChildren<Spawner>();
             foreach (Spawner spawner in spawners)
             {
                 spawner.Initialize(Spawn);
@@ -114,12 +124,19 @@ namespace HHG.SpawnSystem.Runtime
 
             if (spawns.Count == 0)
             {
-                timer = GetWaveDuration(Wave.Value) - GetNextWaveDelay();
+                Timer.Value = GetWaveDuration(Wave.Value) - GetNextWaveDelay();
             }
 
             OnDespawned(enemy);
             CheckIfDoneSpawning();
+        }
 
+        protected void DespawnAll()
+        {
+            foreach (T spawn in spawns)
+            {
+                Despawn(spawn);
+            }
         }
 
         protected virtual void OnDestroy()
