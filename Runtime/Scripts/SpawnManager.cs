@@ -133,9 +133,9 @@ namespace HHG.SpawnSystem.Runtime
 
         protected void DespawnAll()
         {
-            foreach (T spawn in spawns)
+            while(spawns.Count > 0)
             {
-                Despawn(spawn);
+                Despawn(spawns[0]);
             }
         }
 
