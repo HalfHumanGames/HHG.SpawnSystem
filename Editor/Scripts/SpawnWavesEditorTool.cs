@@ -29,7 +29,7 @@ namespace HHG.SpawnSystem.Editor
             {
                 if (_manager == null)
                 {
-                    _manager = this.FindObjectOfType<SpawnManager>();
+                    _manager = ObjectUtil.FindObjectOfType<SpawnManager>();
                 }
                 return _manager;
             }
