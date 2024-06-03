@@ -1,3 +1,4 @@
+using HHG.Common.Runtime;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -29,19 +30,25 @@ namespace HHG.SpawnSystem.Runtime
             create = createSpawn;
         }
 
-        public IEnumerator SpawnAsync(Transform transform)
+        public IEnumerator SpawnAsync(Transform transform, float timeScale = 1f)
+        {
+            return SpawnAsync(transform, () => timeScale);
+        }
+
+        public IEnumerator SpawnAsync(Transform transform, Func<float> timeScale)
         {
             int loop = loopCount;
+
             do
             {
                 for (int w = 0; w < waves.Count; w++)
                 {
-                    yield return new WaitForSeconds(waves[w].Delay);
+                    yield return new WaitForSecondsScaled(waves[w].Delay, timeScale);
                     for (int s = 0; s < waves[w].Count; s++)
                     {
                         Spawn spawn = new Spawn(waves[w].Spawn, transform.position);
                         create(spawn);
-                        yield return new WaitForSeconds(waves[w].Frequency);
+                        yield return new WaitForSecondsScaled(waves[w].Frequency, timeScale);
                     }
                 }
             } while (loop == loopForever || --loop >= 0);
