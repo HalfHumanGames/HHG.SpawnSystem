@@ -10,18 +10,6 @@ namespace HHG.SpawnSystem.Runtime
 
         [SerializeField, Unfold(UnfoldName.Child)] protected SpawnerWaves waves;
 
-        private Coroutine coroutine; 
-
-        protected virtual void Awake()
-        {
-
-        }
-
-        protected virtual void Start()
-        {
-
-        }
-
         public void Initialize(Action<Spawn> createSpawn)
         {
             waves.Initialize(createSpawn);
@@ -36,21 +24,7 @@ namespace HHG.SpawnSystem.Runtime
         {
             source ??= this;
             transform ??= source.transform;
-
-            if (coroutine != null)
-            {
-                CoroutineUtil.StopCoroutine(coroutine);
-            }
-
-            coroutine = source.StartCoroutine(waves.SpawnAsync(transform, timeScale));
-        }
-
-        protected virtual void OnDestroy()
-        {
-            if (coroutine != null)
-            {
-                CoroutineUtil.StopCoroutine(coroutine);
-            }
+            source.StartCoroutine(waves.SpawnAsync(transform, timeScale));
         }
     }
 }
