@@ -39,6 +39,8 @@ namespace HHG.SpawnSystem.Runtime
         {
             int loop = loopCount;
 
+            Vector3 position = transform.position;
+
             do
             {
                 for (int w = 0; w < waves.Count; w++)
@@ -46,7 +48,7 @@ namespace HHG.SpawnSystem.Runtime
                     yield return new WaitForSecondsScaled(waves[w].Delay, timeScale);
                     for (int s = 0; s < waves[w].Count; s++)
                     {
-                        Spawn spawn = new Spawn(waves[w].Spawn, transform.position);
+                        Spawn spawn = new Spawn(waves[w].Spawn, transform?.position ?? position);
                         create(spawn);
                         yield return new WaitForSecondsScaled(waves[w].Frequency, timeScale);
                     }

@@ -15,7 +15,7 @@ namespace HHG.SpawnSystem.Runtime
             waves.Initialize(createSpawn);
         }
 
-        public void Trigger(MonoBehaviour source = null, Transform transform = null, float timeScale = 1f)
+        public void Trigger(MonoBehaviour source, Transform transform, float timeScale = 1f)
         {
             Trigger(source, transform, () => timeScale);
         }
