@@ -17,7 +17,7 @@ namespace HHG.SpawnSystem.Runtime
 
         private Action<Spawn> create;
 
-        public UnityEvent OnDone;
+        public UnityEvent OnDone = new UnityEvent();
 
         public SpawnerWaves(IEnumerable<SpawnerWave> spawnWaves, int loop = 0)
         {
