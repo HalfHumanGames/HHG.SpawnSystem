@@ -1,5 +1,4 @@
 using HHG.Common.Runtime;
-using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -12,14 +11,18 @@ namespace HHG.SpawnSystem.Runtime
         [SerializeField] protected SpawnWavesAsset spawnWaves;
     }
 
-    public abstract class SpawnManager<T> : SpawnManager where T : Component, ISpawn
+    public abstract class SpawnManager<TSpawn> : SpawnManager where TSpawn : Component, ISpawn
     {
+        private const int poolDefaultCapacity = 500;
+        private const int poolMaxSize = 10000;
+
         public IDataProxy<int> Wave { get; private set; }
         public IDataProxy<float> Timer { get; private set; }
-        public IReadOnlyList<T> Spawns => allSpawns;
+        public IReadOnlyList<TSpawn> Spawns => allSpawns;
 
-        private List<T> allSpawns = new List<T>();
-        private List<T> newSpawns = new List<T>();
+        private GameObjectPool<TSpawn> pool;
+        private List<TSpawn> allSpawns = new List<TSpawn>();
+        private List<TSpawn> newSpawns = new List<TSpawn>();
         private int wave = -1; // Waves start at 0
         private float timer;
 
@@ -29,16 +32,18 @@ namespace HHG.SpawnSystem.Runtime
             Cycle
         }
 
+        protected abstract GameObject GetPrefabTemplate();
         protected abstract float GetFirstWaveDelay();
         protected abstract float GetNextWaveDelay();
         protected abstract float GetWaveDuration(int wave);
 
-        protected virtual void OnSpawn(IEnumerable<T> spawns) { }
-        protected virtual void OnDespawn(T spawn) { }
+        protected virtual void OnSpawn(IEnumerable<TSpawn> spawns) { }
+        protected virtual void OnDespawn(TSpawn spawn) { }
         protected virtual void OnDoneSpawning() { }
 
         protected virtual void Awake()
         {
+            pool = new GameObjectPool<TSpawn>(GetPrefabTemplate(), transform, false, poolDefaultCapacity, poolMaxSize);
             Wave = new DataProxy<int>(() => wave, v => wave = v);
             Timer = new DataProxy<float>(() => timer, v => timer = v);
             Timer.Value = GetWaveDuration(Wave.Value) - GetFirstWaveDelay();
@@ -53,7 +58,6 @@ namespace HHG.SpawnSystem.Runtime
                 if (Timer.Value > GetWaveDuration(Wave.Value))
                 {
                     Wave.Value++;
-
                     Timer.Value = 0;
 
                     Spawn[] spawns = spawnWaves.GetSpawnsForWave(Wave.Value);
@@ -63,14 +67,6 @@ namespace HHG.SpawnSystem.Runtime
                     }
                 }
             }
-        }
-
-        protected abstract T GetSpawn(Spawn spawn);
-        protected abstract void ReleaseSpawn(T spawn);
-
-        private void OnSpawnDie(IHealth health)
-        {
-            Despawn(health.Mono.GetComponent<T>());
         }
 
         private void CheckIfDoneSpawning()
@@ -88,7 +84,7 @@ namespace HHG.SpawnSystem.Runtime
                         OnDoneSpawning();
                     }
                 });
-            }      
+            }
         }
 
         protected void Spawn(Spawn spawn)
@@ -98,7 +94,8 @@ namespace HHG.SpawnSystem.Runtime
                 newSpawns.Clear();
                 foreach (Vector3 offset in spawn.Asset.GetSpawnOffsets())
                 {
-                    T instance = GetSpawn(spawn);
+                    TSpawn instance = pool.Get();
+                    instance.Initialize(spawn.Asset);
                     instance.transform.position = spawn.Position + offset;
                     newSpawns.Add(instance);
                 }
@@ -108,17 +105,17 @@ namespace HHG.SpawnSystem.Runtime
 
         protected void SetupAllSpawns()
         {
-            T[] spawns = gameObject.GetComponentsInChildren<T>();
+            TSpawn[] spawns = gameObject.GetComponentsInChildren<TSpawn>();
             SetupSpawns(spawns);
         }
 
-        protected void SetupSpawns(IEnumerable<T> spawns)
+        protected void SetupSpawns(IEnumerable<TSpawn> spawns)
         {
             allSpawns.AddRange(spawns);
 
-            foreach (T spawn in spawns)
+            foreach (TSpawn spawn in spawns)
             {
-                spawn.Health.OnDied.AddListener(OnSpawnDie);
+                spawn.SubscribeToDespawnEvent(Despawn);
 
                 foreach (Spawner spawner in spawn.GetComponentsInChildren<Spawner>())
                 {
@@ -129,7 +126,12 @@ namespace HHG.SpawnSystem.Runtime
             OnSpawn(spawns);
         }
 
-        protected void Despawn(T spawn)
+        protected void Despawn(ISpawn spawn)
+        {
+            Despawn((TSpawn)spawn);
+        }
+
+        protected void Despawn(TSpawn spawn)
         {
             allSpawns.Remove(spawn);
 
@@ -138,14 +140,15 @@ namespace HHG.SpawnSystem.Runtime
                 Timer.Value = GetWaveDuration(Wave.Value) - GetNextWaveDelay();
             }
 
+            spawn.UnsubscribeFromDespawnEvent(Despawn);
             OnDespawn(spawn);
-            ReleaseSpawn(spawn);
+            pool.Release(spawn);
             CheckIfDoneSpawning();
         }
 
         protected void DespawnAll()
         {
-            while(allSpawns.Count > 0)
+            while (allSpawns.Count > 0)
             {
                 Despawn(allSpawns[0]);
             }
