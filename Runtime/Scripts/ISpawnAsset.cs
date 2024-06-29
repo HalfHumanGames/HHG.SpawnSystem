@@ -8,8 +8,8 @@ namespace HHG.SpawnSystem.Runtime
     public interface ISpawnAsset
     {
         public bool IsEnabled { get; }
-        public GameObject Prefab { get; }
-        public Sprite Icon { get; }
+        public Sprite Sprite { get; }
+        public IEnumerable<Vector3> GetSpawnOffsets();
 
         public void AppendInfoTextInternal(StringBuilder sb, List<SpawnPoint> points, int wave)
         {

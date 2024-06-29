@@ -1,4 +1,5 @@
 using HHG.Common.Runtime;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -11,13 +12,14 @@ namespace HHG.SpawnSystem.Runtime
         [SerializeField] protected SpawnWavesAsset spawnWaves;
     }
 
-    public abstract class SpawnManager<T> : SpawnManager where T : ISpawn
+    public abstract class SpawnManager<T> : SpawnManager where T : Component, ISpawn
     {
         public IDataProxy<int> Wave { get; private set; }
         public IDataProxy<float> Timer { get; private set; }
-        public IReadOnlyList<T> Spawns => spawns;
+        public IReadOnlyList<T> Spawns => allSpawns;
 
-        private List<T> spawns = new List<T>();
+        private List<T> allSpawns = new List<T>();
+        private List<T> newSpawns = new List<T>();
         private int wave = -1; // Waves start at 0
         private float timer;
 
@@ -31,8 +33,8 @@ namespace HHG.SpawnSystem.Runtime
         protected abstract float GetNextWaveDelay();
         protected abstract float GetWaveDuration(int wave);
 
-        protected virtual void OnSpawned(T[] spawns) { }
-        protected virtual void OnDespawned(T spawn) { }
+        protected virtual void OnSpawn(IEnumerable<T> spawns) { }
+        protected virtual void OnDespawn(T spawn) { }
         protected virtual void OnDoneSpawning() { }
 
         protected virtual void Awake()
@@ -63,6 +65,9 @@ namespace HHG.SpawnSystem.Runtime
             }
         }
 
+        protected abstract T GetSpawn(Spawn spawn);
+        protected abstract void ReleaseSpawn(T spawn);
+
         private void OnSpawnDie(IHealth health)
         {
             Despawn(health.Mono.GetComponent<T>());
@@ -73,12 +78,12 @@ namespace HHG.SpawnSystem.Runtime
             // Do initial check so don't create unnecessary coroutines
             // TODO: Won't work if spawner has a start delay, but we'll
             // worry about that scenario later on
-            if (spawns.Count == 0 && Wave.Value == spawnWaves.WaveCount)
+            if (allSpawns.Count == 0 && Wave.Value == spawnWaves.WaveCount)
             {
                 // Wait a frame in case killed spawned spawns chils spawns
                 this.Invoker().NextFrame(_ =>
                 {
-                    if (spawns.Count == 0 && Wave.Value == spawnWaves.WaveCount)
+                    if (allSpawns.Count == 0 && Wave.Value == spawnWaves.WaveCount)
                     {
                         OnDoneSpawning();
                     }
@@ -88,54 +93,61 @@ namespace HHG.SpawnSystem.Runtime
 
         protected void Spawn(Spawn spawn)
         {
-            if (spawn.Asset == null) return;
-
-            // Spawns can get stuck if their target position is lined up with them
-            // No idea why this happens, but offsetting it prevents this from happening
-            Vector3 offset = new Vector3(.1f, .1f);
-            GameObject go = Instantiate(spawn.Asset.Prefab, spawn.Position + offset, Quaternion.identity, transform);
-            SetupSpawns(go);
+            if (spawn.Asset != null)
+            {
+                newSpawns.Clear();
+                foreach (Vector3 offset in spawn.Asset.GetSpawnOffsets())
+                {
+                    T instance = GetSpawn(spawn);
+                    instance.transform.position = spawn.Position + offset;
+                    newSpawns.Add(instance);
+                }
+                SetupSpawns(newSpawns);
+            }
         }
 
-        protected void SetupSpawns(GameObject go = null)
+        protected void SetupAllSpawns()
         {
-            go ??= gameObject; // Gets all child spawns
-
-            // Use GetComponentsInChildren since spawns may contain child spawns
-            T[] spawned = go.GetComponentsInChildren<T>();
-            foreach (T enemy in spawned)
-            {
-                enemy.Health.OnDied.AddListener(OnSpawnDie);
-                spawns.Add(enemy);
-            }
-
-            Spawner[] spawners = go.GetComponentsInChildren<Spawner>();
-            foreach (Spawner spawner in spawners)
-            {
-                spawner.Initialize(Spawn);
-            }
-
-            OnSpawned(spawned);
+            T[] spawns = gameObject.GetComponentsInChildren<T>();
+            SetupSpawns(spawns);
         }
 
-        protected void Despawn(T enemy)
+        protected void SetupSpawns(IEnumerable<T> spawns)
         {
-            spawns.Remove(enemy);
+            allSpawns.AddRange(spawns);
 
-            if (spawns.Count == 0)
+            foreach (T spawn in spawns)
+            {
+                spawn.Health.OnDied.AddListener(OnSpawnDie);
+
+                foreach (Spawner spawner in spawn.GetComponentsInChildren<Spawner>())
+                {
+                    spawner.Initialize(Spawn);
+                }
+            }
+
+            OnSpawn(spawns);
+        }
+
+        protected void Despawn(T spawn)
+        {
+            allSpawns.Remove(spawn);
+
+            if (allSpawns.Count == 0)
             {
                 Timer.Value = GetWaveDuration(Wave.Value) - GetNextWaveDelay();
             }
 
-            OnDespawned(enemy);
+            OnDespawn(spawn);
+            ReleaseSpawn(spawn);
             CheckIfDoneSpawning();
         }
 
         protected void DespawnAll()
         {
-            while(spawns.Count > 0)
+            while(allSpawns.Count > 0)
             {
-                Despawn(spawns[0]);
+                Despawn(allSpawns[0]);
             }
         }
 

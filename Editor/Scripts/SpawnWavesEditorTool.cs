@@ -125,7 +125,7 @@ namespace HHG.SpawnSystem.Editor
             Vector2 guiPosition = HandleUtility.WorldToGUIPoint(spawnPoint.Position);
             Rect spriteRect = new Rect(0f, 0f, imageSize, imageSize);
             Vector2 spritePivot = new Vector2(imageSize / 2f, imageSize / 2f);
-            Sprite sprite = spawnPoint.GetSpawn(wave).Asset?.Icon;
+            Sprite sprite = spawnPoint.GetSpawn(wave).Asset.Sprite;
 
             if (sprite != null)
             {
@@ -146,7 +146,7 @@ namespace HHG.SpawnSystem.Editor
 
             if (sprite != null)
             {
-                GUI.DrawTexture(rect, sprite.texture);
+                GUI.DrawTextureWithTexCoords(rect, sprite.texture, sprite.rect);
             }
             else
             {

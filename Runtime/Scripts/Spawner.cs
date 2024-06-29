@@ -22,8 +22,14 @@ namespace HHG.SpawnSystem.Runtime
 
         public void Trigger(MonoBehaviour source, Transform transform, Func<float> timeScale)
         {
-            source ??= this;
-            transform ??= source.transform;
+            if (source == null)
+            {
+                source = this;
+            }
+            if (transform == null)
+            {
+                transform = source.transform;
+            }
             source.StartCoroutine(waves.SpawnAsync(transform, timeScale));
         }
     }
