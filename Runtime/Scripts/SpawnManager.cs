@@ -32,7 +32,7 @@ namespace HHG.SpawnSystem.Runtime
             Cycle
         }
 
-        protected abstract GameObject GetPrefabTemplate();
+        protected abstract TSpawn GetPrefabTemplate();
         protected abstract float GetFirstWaveDelay();
         protected abstract float GetNextWaveDelay();
         protected abstract float GetWaveDuration(int wave);
@@ -95,8 +95,9 @@ namespace HHG.SpawnSystem.Runtime
                 foreach (Vector3 offset in spawn.Asset.GetSpawnOffsets())
                 {
                     TSpawn instance = pool.Get();
-                    instance.Initialize(spawn.Asset);
                     instance.transform.position = spawn.Position + offset;
+                    instance.Initialize(spawn.Asset); // Initialize after set position
+                    instance.gameObject.SetActive(true); // Set active after initialize
                     newSpawns.Add(instance);
                 }
                 SetupSpawns(newSpawns);
@@ -133,16 +134,17 @@ namespace HHG.SpawnSystem.Runtime
 
         protected void Despawn(TSpawn spawn)
         {
+            spawn.gameObject.SetActive(false);
+            spawn.UnsubscribeFromDespawnEvent(Despawn);
+            pool.Release(spawn);
             allSpawns.Remove(spawn);
+            OnDespawn(spawn);
 
             if (allSpawns.Count == 0)
             {
                 Timer.Value = GetWaveDuration(Wave.Value) - GetNextWaveDelay();
             }
 
-            spawn.UnsubscribeFromDespawnEvent(Despawn);
-            OnDespawn(spawn);
-            pool.Release(spawn);
             CheckIfDoneSpawning();
         }
 
