@@ -61,9 +61,18 @@ namespace HHG.SpawnSystem.Runtime
                     Timer.Value = 0;
 
                     Spawn[] spawns = spawnWaves.GetSpawnsForWave(Wave.Value);
-                    foreach (Spawn spawn in spawns)
+                    
+                    if (spawns.Length > 0)
                     {
-                        Spawn(spawn);
+                        foreach (Spawn spawn in spawns)
+                        {
+                            Spawn(spawn);
+                        }
+                    }
+                    else
+                    {
+                        CheckIfDoneSpawning();
+
                     }
                 }
             }
@@ -76,7 +85,7 @@ namespace HHG.SpawnSystem.Runtime
             // worry about that scenario later on
             if (allSpawns.Count == 0 && Wave.Value == spawnWaves.WaveCount)
             {
-                // Wait a frame in case killed spawned spawns chils spawns
+                // Wait a frame in case killed spawned spawns childs spawns
                 this.Invoker().NextFrame(_ =>
                 {
                     if (allSpawns.Count == 0 && Wave.Value == spawnWaves.WaveCount)
