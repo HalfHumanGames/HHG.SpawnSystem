@@ -15,12 +15,12 @@ namespace HHG.SpawnSystem.Runtime
             waves.Initialize(createSpawn);
         }
 
-        public void Trigger(MonoBehaviour source, Transform transform, float timeScale = 1f)
+        public Coroutine Trigger(MonoBehaviour source, Transform transform, float timeScale = 1f)
         {
-            Trigger(source, transform, () => timeScale);
+            return Trigger(source, transform, () => timeScale);
         }
 
-        public void Trigger(MonoBehaviour source, Transform transform, Func<float> timeScale)
+        public Coroutine Trigger(MonoBehaviour source, Transform transform, Func<float> timeScale)
         {
             if (source == null)
             {
@@ -30,7 +30,7 @@ namespace HHG.SpawnSystem.Runtime
             {
                 transform = source.transform;
             }
-            source.StartCoroutine(waves.SpawnAsync(transform, timeScale));
+            return source.StartCoroutine(waves.SpawnAsync(transform, timeScale));
         }
     }
 }
