@@ -1,4 +1,5 @@
 using HHG.Common.Runtime;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -23,6 +24,8 @@ namespace HHG.SpawnSystem.Runtime
         private GameObjectPool<TSpawn> pool;
         private List<TSpawn> allSpawns = new List<TSpawn>();
         private List<TSpawn> newSpawns = new List<TSpawn>();
+        private List<TSpawn> releaseQueue = new List<TSpawn>();
+        private Coroutine releaseCoroutine;
         private int wave = -1; // Waves start at 0
         private float timer;
 
@@ -47,6 +50,16 @@ namespace HHG.SpawnSystem.Runtime
             Wave = new DataProxy<int>(() => wave, v => wave = v);
             Timer = new DataProxy<float>(() => timer, v => timer = v);
             Timer.Value = GetWaveDuration(Wave.Value) - GetFirstWaveDelay();
+        }
+
+        protected virtual void OnEnable()
+        {
+            releaseCoroutine = StartCoroutine(ReleaseAsync());
+        }
+
+        protected virtual void OnDisable()
+        {
+            StopCoroutine(releaseCoroutine);
         }
 
         protected virtual void Update()
@@ -75,6 +88,21 @@ namespace HHG.SpawnSystem.Runtime
 
                     }
                 }
+            }
+        }
+
+        private IEnumerator ReleaseAsync()
+        {
+            while (true)
+            {
+                yield return WaitFor.EndOfFrame;
+
+                foreach (TSpawn toRelease in releaseQueue)
+                {
+                    pool.Release(toRelease);
+                }
+
+                releaseQueue.Clear();
             }
         }
 
@@ -145,7 +173,11 @@ namespace HHG.SpawnSystem.Runtime
         {
             spawn.gameObject.SetActive(false);
             spawn.UnsubscribeFromDespawnEvent(Despawn);
-            pool.Release(spawn);
+
+            // Components often don't get destroyed until the
+            // at the end of the update loop, so we release next
+            // frame to prevent any weird issues from occuring
+            releaseQueue.Add(spawn);
             allSpawns.Remove(spawn);
             OnDespawn(spawn);
 
