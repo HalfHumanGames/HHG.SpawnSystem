@@ -1,5 +1,4 @@
 using HHG.Common.Runtime;
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -44,7 +43,7 @@ namespace HHG.SpawnSystem.Runtime
 
         protected virtual void Awake()
         {
-            pool = new GameObjectPool<TSpawn>(GetPrefabTemplate(), transform, false, poolDefaultCapacity, poolMaxSize);
+            pool = new GameObjectPool<TSpawn>(GetPrefabTemplate(), transform, Debug.isDebugBuild, poolDefaultCapacity, poolMaxSize);
             Wave = new DataProxy<int>(() => wave, v => wave = v);
             Timer = new DataProxy<float>(() => timer, v => timer = v);
             Timer.Value = GetWaveDuration(Wave.Value) - GetFirstWaveDelay();
@@ -126,6 +125,7 @@ namespace HHG.SpawnSystem.Runtime
 
             foreach (TSpawn spawn in spawns)
             {
+                spawn.UnsubscribeFromDespawnEvent(Despawn); // Just in case
                 spawn.SubscribeToDespawnEvent(Despawn);
 
                 foreach (Spawner spawner in spawn.GetComponentsInChildren<Spawner>())
