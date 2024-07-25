@@ -16,15 +16,17 @@ namespace HHG.SpawnSystem.Runtime
         private const int poolDefaultCapacity = 500;
         private const int poolMaxSize = 10000;
 
+        public IReadOnlyList<TSpawn> Spawns => allSpawns;
         public IDataProxy<int> Wave { get; private set; }
         public IDataProxy<float> Timer { get; private set; }
-        public IReadOnlyList<TSpawn> Spawns => allSpawns;
+        public bool IsDone => isDone;
 
         private GameObjectPool<TSpawn> pool;
         private List<TSpawn> allSpawns = new List<TSpawn>();
         private List<TSpawn> newSpawns = new List<TSpawn>();
         private int wave = -1; // Waves start at 0
         private float timer;
+        private bool isDone;
 
         protected enum Mode
         {
@@ -51,6 +53,11 @@ namespace HHG.SpawnSystem.Runtime
 
         protected virtual void Update()
         {
+            if (isDone)
+            {
+                return;
+            }
+
             if (Wave.Value < spawnWaves.WaveCount)
             {
                 Timer.Value += Time.deltaTime;
@@ -71,28 +78,34 @@ namespace HHG.SpawnSystem.Runtime
                     }
                     else
                     {
-                        CheckIfDoneSpawning();
-
+                        CheckIfDoneSpawningSingleCheck();
                     }
                 }
             }
+            else
+            {
+                CheckIfDoneSpawningSingleCheck();
+            }
         }
 
-        private void CheckIfDoneSpawning()
+        private void CheckIfDoneSpawningDoubleCheck()
         {
             // Do initial check so don't create unnecessary coroutines
-            // TODO: Won't work if spawner has a start delay, but we'll
-            // worry about that scenario later on
-            if (allSpawns.Count == 0 && Wave.Value == spawnWaves.WaveCount)
+            // This won't work if spawner has a start delay, but we'll
+            // worry about that scenario later since it's an edge case
+            if (allSpawns.Count == 0 && Wave.Value >= spawnWaves.WaveCount)
             {
                 // Wait a frame in case killed spawned spawns childs spawns
-                this.Invoker().NextFrame(_ =>
-                {
-                    if (allSpawns.Count == 0 && Wave.Value == spawnWaves.WaveCount)
-                    {
-                        OnDoneSpawning();
-                    }
-                });
+                CoroutineUtil.Coroutiner.Invoker().NextFrame(_ => CheckIfDoneSpawningSingleCheck());
+            }
+        }
+
+        private void CheckIfDoneSpawningSingleCheck()
+        {
+            if (allSpawns.Count == 0 && Wave.Value >= spawnWaves.WaveCount)
+            {
+                isDone = true;
+                OnDoneSpawning();
             }
         }
 
@@ -159,7 +172,7 @@ namespace HHG.SpawnSystem.Runtime
                 Timer.Value = GetWaveDuration(Wave.Value) - GetNextWaveDelay();
             }
 
-            CheckIfDoneSpawning();
+            CheckIfDoneSpawningDoubleCheck();
         }
 
         protected void DespawnAll()
