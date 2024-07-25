@@ -88,12 +88,17 @@ namespace HHG.SpawnSystem.Runtime
             }
         }
 
+        protected virtual bool IsDoneSpawning()
+        {
+            return allSpawns.Count == 0 && Wave.Value >= spawnWaves.WaveCount;
+        }
+
         private void CheckIfDoneSpawningDoubleCheck()
         {
             // Do initial check so don't create unnecessary coroutines
             // This won't work if spawner has a start delay, but we'll
             // worry about that scenario later since it's an edge case
-            if (allSpawns.Count == 0 && Wave.Value >= spawnWaves.WaveCount)
+            if (IsDoneSpawning())
             {
                 // Wait a frame in case killed spawned spawns childs spawns
                 CoroutineUtil.Coroutiner.Invoker().NextFrame(_ => CheckIfDoneSpawningSingleCheck());
@@ -102,7 +107,7 @@ namespace HHG.SpawnSystem.Runtime
 
         private void CheckIfDoneSpawningSingleCheck()
         {
-            if (allSpawns.Count == 0 && Wave.Value >= spawnWaves.WaveCount)
+            if (IsDoneSpawning())
             {
                 isDone = true;
                 OnDoneSpawning();
