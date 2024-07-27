@@ -188,6 +188,11 @@ namespace HHG.SpawnSystem.Runtime
             }
         }
 
+        protected void StopSpawning()
+        {
+            isDone = true;
+        }
+
         protected virtual void OnDestroy()
         {
 
