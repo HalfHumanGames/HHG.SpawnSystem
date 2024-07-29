@@ -24,6 +24,7 @@ namespace HHG.SpawnSystem.Runtime
         private GameObjectPool<TSpawn> pool;
         private List<TSpawn> allSpawns = new List<TSpawn>();
         private List<TSpawn> newSpawns = new List<TSpawn>();
+        private Queue<Spawn> spawnQueue = new Queue<Spawn>();
         private int wave = -1; // Waves start at 0
         private float timer;
         private bool isDone;
@@ -56,6 +57,13 @@ namespace HHG.SpawnSystem.Runtime
             if (isDone)
             {
                 return;
+            }
+
+            // Spawns queued while the navmesh
+            // was being rebuilt
+            while(spawnQueue.Count > 0)
+            {
+                Spawn(spawnQueue.Dequeue());
             }
 
             if (Wave.Value < spawnWaves.WaveCount)
@@ -116,18 +124,30 @@ namespace HHG.SpawnSystem.Runtime
 
         protected void Spawn(Spawn spawn)
         {
+            if (isDone)
+            {
+                return;
+            }
+
             if (spawn.Asset != null)
             {
-                newSpawns.Clear();
-                foreach (Vector3 offset in spawn.Asset.GetSpawnOffsets())
+                if (enabled)
                 {
-                    TSpawn instance = pool.Get();
-                    instance.transform.position = spawn.Position + offset;
-                    instance.Initialize(spawn.Asset); // Initialize after set position
-                    instance.gameObject.SetActive(true); // Set active after initialize
-                    newSpawns.Add(instance);
+                    newSpawns.Clear();
+                    foreach (Vector3 offset in spawn.Asset.GetSpawnOffsets())
+                    {
+                        TSpawn instance = pool.Get();
+                        instance.transform.position = spawn.Position + offset;
+                        instance.Initialize(spawn.Asset); // Initialize after set position
+                        instance.gameObject.SetActive(true); // Set active after initialize
+                        newSpawns.Add(instance);
+                    }
+                    SetupSpawns(newSpawns);
                 }
-                SetupSpawns(newSpawns);
+                else // Navmesh is being rebuilt
+                {
+                    spawnQueue.Enqueue(spawn);
+                }
             }
         }
 
