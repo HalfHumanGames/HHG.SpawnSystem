@@ -1,5 +1,6 @@
 using HHG.Common.Runtime;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 namespace HHG.SpawnSystem.Runtime
@@ -153,8 +154,14 @@ namespace HHG.SpawnSystem.Runtime
 
         protected void SetupAllSpawns()
         {
-            TSpawn[] spawns = gameObject.GetComponentsInChildren<TSpawn>();
-            SetupSpawns(spawns);
+            TSpawn[] spawns = gameObject.GetComponentsInChildren<TSpawn>(true);
+            var active = spawns.Where(s => s.gameObject.activeSelf);
+            var inactive = spawns.Where(s => !s.gameObject.activeSelf);
+            SetupSpawns(active);
+            foreach (TSpawn spawn in inactive)
+            {
+                pool.Release(spawn);
+            }
         }
 
         protected void SetupSpawns(IEnumerable<TSpawn> spawns)
@@ -166,13 +173,21 @@ namespace HHG.SpawnSystem.Runtime
                 spawn.UnsubscribeFromDespawnEvent(Despawn); // Just in case
                 spawn.SubscribeToDespawnEvent(Despawn);
 
-                foreach (Spawner spawner in spawn.GetComponentsInChildren<Spawner>())
+                foreach (Spawner spawner in spawn.GetComponentsInChildren<Spawner>(true))
                 {
                     spawner.Initialize(Spawn);
                 }
             }
 
             OnSpawn(spawns);
+        }
+
+        protected void Despawn(IEnumerable<TSpawn> spawns)
+        {
+            foreach (TSpawn spawn in spawns)
+            {
+                Despawn(spawn);
+            }
         }
 
         protected void Despawn(ISpawn spawn)
