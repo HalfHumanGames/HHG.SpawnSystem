@@ -1,4 +1,5 @@
 using HHG.Common.Runtime;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -16,6 +17,7 @@ namespace HHG.SpawnSystem.Runtime
     {
         private const int poolDefaultCapacity = 500;
         private const int poolMaxSize = 10000;
+        private const int spawnBatchSize = 10;
 
         public IReadOnlyList<TSpawn> Spawns => allSpawns;
         public IDataProxy<int> Wave { get; private set; }
@@ -27,8 +29,10 @@ namespace HHG.SpawnSystem.Runtime
         private List<TSpawn> newSpawns = new List<TSpawn>();
         private Queue<Spawn> spawnQueue = new Queue<Spawn>();
         private int wave = -1; // Waves start at 0
+        private int spawnBatchCount;
         private float timer;
         private bool isDone;
+        private bool canContinueSpawning => spawnBatchCount < spawnBatchSize;
 
         protected enum Mode
         {
@@ -51,55 +55,85 @@ namespace HHG.SpawnSystem.Runtime
             Wave = new DataProxy<int>(() => wave, v => wave = v);
             Timer = new DataProxy<float>(() => timer, v => timer = v);
             Timer.Value = GetWaveDuration(Wave.Value) - GetFirstWaveDelay();
+            StartCoroutine(UpdateRoutine());
+        }
+
+        protected virtual void OnEnable()
+        {
+            
+        }
+
+        protected virtual void OnDisable()
+        {
+
         }
 
         protected virtual void Update()
         {
-            if (isDone)
-            {
-                return;
-            }
 
-            // Spawns queued while the navmesh
-            // was being rebuilt
-            while(spawnQueue.Count > 0)
-            {
-                Spawn(spawnQueue.Dequeue());
-            }
+        }
 
-            if (Wave.Value < spawnWaves.WaveCount)
+        protected virtual IEnumerator UpdateRoutine()
+        {
+            while (true)
             {
-                Timer.Value += Time.deltaTime;
+                spawnBatchCount = 0;
 
-                if (Timer.Value > GetWaveDuration(Wave.Value))
+                if (isDone || !enabled)
                 {
-                    Wave.Value++;
-                    Timer.Value = 0;
+                    yield return WaitFor.EndOfFrame;
+                }
 
-                    Spawn[] spawns = spawnWaves.GetSpawnsForWave(Wave.Value);
-                    
-                    if (spawns.Length > 0)
+                // Spawns queued while the navmesh
+                // was being rebuilt
+                while (spawnQueue.Count > 0 && canContinueSpawning)
+                {
+                    Spawn(spawnQueue.Dequeue());
+                }
+
+                if (Wave.Value < spawnWaves.WaveCount)
+                {
+                    Timer.Value += Time.deltaTime;
+
+                    if (Timer.Value > GetWaveDuration(Wave.Value))
                     {
-                        foreach (Spawn spawn in spawns)
+                        Wave.Value++;
+                        Timer.Value = 0;
+
+                        Spawn[] spawns = spawnWaves.GetSpawnsForWave(Wave.Value);
+
+                        if (spawns.Length > 0)
                         {
-                            Spawn(spawn);
+                            foreach (Spawn spawn in spawns)
+                            {
+                                if (canContinueSpawning)
+                                {
+                                    Spawn(spawn);
+                                }
+                                else
+                                {
+                                    spawnQueue.Enqueue(spawn);
+                                }
+                            }
+                        }
+                        else
+                        {
+                            CheckIfDoneSpawningSingleCheck();
                         }
                     }
-                    else
-                    {
-                        CheckIfDoneSpawningSingleCheck();
-                    }
                 }
-            }
-            else
-            {
-                CheckIfDoneSpawningSingleCheck();
+                else
+                {
+                    CheckIfDoneSpawningSingleCheck();
+                }
+
+                yield return WaitFor.EndOfFrame;
             }
         }
 
         protected virtual bool IsDoneSpawning()
         {
-            return allSpawns.Count == 0 && Wave.Value >= spawnWaves.WaveCount;
+            return allSpawns.Count == 0 && spawnQueue.Count == 0 && Wave.Value >= spawnWaves.WaveCount;
         }
 
         private void CheckIfDoneSpawningDoubleCheck()
@@ -132,7 +166,7 @@ namespace HHG.SpawnSystem.Runtime
 
             if (spawn.Asset != null)
             {
-                if (enabled)
+                if (enabled && canContinueSpawning)
                 {
                     newSpawns.Clear();
                     foreach (Vector3 offset in spawn.Asset.GetSpawnOffsets())
@@ -142,6 +176,7 @@ namespace HHG.SpawnSystem.Runtime
                         instance.Initialize(spawn.Asset); // Initialize after set position
                         instance.gameObject.SetActive(true); // Set active after initialize
                         newSpawns.Add(instance);
+                        spawnBatchCount++;
                     }
                     SetupSpawns(newSpawns);
                 }
