@@ -173,7 +173,7 @@ namespace HHG.SpawnSystem.Runtime
                     {
                         TSpawn instance = pool.Get();
                         instance.transform.position = spawn.Position + offset;
-                        instance.Initialize(spawn.Asset); // Initialize after set position
+                        instance.Initialize(spawn); // Initialize after set position
                         instance.gameObject.SetActive(true); // Set active after initialize
                         newSpawns.Add(instance);
                         spawnBatchCount++;
