@@ -25,9 +25,9 @@ namespace HHG.SpawnSystem.Runtime
             waves = new List<SpawnerWave>(spawnWaves);
         }
 
-        public void Initialize(Action<Spawn> createSpawn)
+        public void Initialize(Action<Spawn> create)
         {
-            create = createSpawn;
+            this.create = create;
         }
 
         public IEnumerator SpawnAsync(Transform transform, float timeScale = 1f)

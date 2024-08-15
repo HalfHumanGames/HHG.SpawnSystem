@@ -10,9 +10,9 @@ namespace HHG.SpawnSystem.Runtime
 
         [SerializeField, Unfold(UnfoldName.Child)] protected SpawnerWaves waves;
 
-        public void Initialize(Action<Spawn> createSpawn)
+        public virtual void Initialize(Action<Spawn> create)
         {
-            waves.Initialize(createSpawn);
+            waves.Initialize(create);
         }
 
         public Coroutine Trigger(MonoBehaviour source, Transform transform, float timeScale = 1f)
