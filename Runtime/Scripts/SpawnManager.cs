@@ -81,7 +81,7 @@ namespace HHG.SpawnSystem.Runtime
 
                 if (isDone || !enabled)
                 {
-                    yield return WaitFor.EndOfFrame;
+                    yield return null;
                 }
 
                 // Spawns queued while the navmesh
@@ -127,7 +127,7 @@ namespace HHG.SpawnSystem.Runtime
                     CheckIfDoneSpawningSingleCheck();
                 }
 
-                yield return WaitFor.EndOfFrame;
+                yield return null;
             }
         }
 
