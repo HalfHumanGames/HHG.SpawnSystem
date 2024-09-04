@@ -15,10 +15,6 @@ namespace HHG.SpawnSystem.Runtime
 
     public abstract class SpawnManager<TSpawn> : SpawnManager where TSpawn : Component, ISpawn
     {
-        private const int poolDefaultCapacity = 500;
-        private const int poolMaxSize = 10000;
-        private const int spawnBatchSize = 10;
-
         public IReadOnlyList<TSpawn> Spawns => allSpawns;
         public IDataProxy<int> Wave { get; private set; }
         public IDataProxy<float> Timer { get; private set; }
@@ -32,7 +28,8 @@ namespace HHG.SpawnSystem.Runtime
         private int spawnBatchCount;
         private float timer;
         private bool isDone;
-        private bool canContinueSpawning => spawnBatchCount < spawnBatchSize;
+        private bool canContinueSpawning => spawnBatchCount < settings.SpawnBatchSize;
+        private SpawnManagerSettings settings;
 
         protected enum Mode
         {
@@ -44,6 +41,7 @@ namespace HHG.SpawnSystem.Runtime
         protected abstract float GetFirstWaveDelay();
         protected abstract float GetNextWaveDelay();
         protected abstract float GetWaveDuration(int wave);
+        protected abstract SpawnManagerSettings GetSettings();
 
         protected virtual void OnSpawn(IEnumerable<TSpawn> spawns) { }
         protected virtual void OnDespawn(TSpawn spawn) { }
@@ -51,7 +49,8 @@ namespace HHG.SpawnSystem.Runtime
 
         protected virtual void Awake()
         {
-            pool = new GameObjectPool<TSpawn>(GetPrefabTemplate(), transform, Debug.isDebugBuild, poolDefaultCapacity, poolMaxSize);
+            settings = GetSettings();
+            pool = new GameObjectPool<TSpawn>(GetPrefabTemplate(), transform, Debug.isDebugBuild, settings.PoolDefaultCapacity, settings.PoolMaxSize, settings.PoolPrewarm);
             Wave = new DataProxy<int>(() => wave, v => wave = v);
             Timer = new DataProxy<float>(() => timer, v => timer = v);
             Timer.Value = GetWaveDuration(Wave.Value) - GetFirstWaveDelay();
