@@ -188,14 +188,9 @@ namespace HHG.SpawnSystem.Runtime
 
         protected void SetupAllSpawns()
         {
-            TSpawn[] spawns = gameObject.GetComponentsInChildren<TSpawn>(true);
-            var active = spawns.Where(s => s.gameObject.activeSelf);
-            var inactive = spawns.Where(s => !s.gameObject.activeSelf);
-            SetupSpawns(active);
-            foreach (TSpawn spawn in inactive)
-            {
-                pool.Release(spawn);
-            }
+            // We only want to call SetupSpawns on active spawns
+            TSpawn[] activeSpawns = gameObject.GetComponentsInChildren<TSpawn>();
+            SetupSpawns(activeSpawns);
         }
 
         protected void SetupSpawns(IEnumerable<TSpawn> spawns)
