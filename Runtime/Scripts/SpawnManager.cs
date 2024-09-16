@@ -1,7 +1,6 @@
 using HHG.Common.Runtime;
 using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 
 namespace HHG.SpawnSystem.Runtime
@@ -206,6 +205,11 @@ namespace HHG.SpawnSystem.Runtime
                 {
                     spawner.Initialize(Spawn);
                 }
+
+                foreach (ISpawnListener listener in spawn.GetComponentsInChildren<ISpawnListener>(true))
+                {
+                    listener.OnSpawn();
+                }
             }
 
             OnSpawn(spawns);
@@ -235,6 +239,11 @@ namespace HHG.SpawnSystem.Runtime
 
             allSpawns.Remove(spawn);
             OnDespawn(spawn);
+
+            foreach (IDespawnListener listener in spawn.GetComponentsInChildren<IDespawnListener>(true))
+            {
+                listener.OnDespawn();
+            }
 
             if (allSpawns.Count == 0)
             {
