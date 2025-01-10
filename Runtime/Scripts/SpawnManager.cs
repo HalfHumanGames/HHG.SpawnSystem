@@ -142,7 +142,7 @@ namespace HHG.SpawnSystem.Runtime
             if (IsDoneSpawning())
             {
                 // Wait a frame in case killed spawned spawns childs spawns
-                CoroutineUtil.Coroutiner.Invoker().NextFrame(_ => CheckIfDoneSpawningSingleCheck());
+                CoroutineUtil.Coroutiner.NextFrame(_ => CheckIfDoneSpawningSingleCheck());
             }
         }
 
