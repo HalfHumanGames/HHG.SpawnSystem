@@ -36,6 +36,7 @@ namespace HHG.SpawnSystem.Runtime
             Cycle
         }
 
+        protected abstract int GetEnemyThresholdToAutoStartNextWave();
         protected abstract TSpawn GetPrefabTemplate();
         protected abstract float GetFirstWaveDelay();
         protected abstract float GetNextWaveDelay();
@@ -245,7 +246,7 @@ namespace HHG.SpawnSystem.Runtime
                 listener.OnDespawn();
             }
 
-            if (allSpawns.Count == 0)
+            if (allSpawns.Count <= GetEnemyThresholdToAutoStartNextWave())
             {
                 Timer.Value = GetWaveDuration(Wave.Value) - GetNextWaveDelay();
             }
